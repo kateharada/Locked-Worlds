@@ -1,110 +1,148 @@
-# FHEVM Hardhat Template
+# Locked Worlds
 
-A Hardhat-based template for developing Fully Homomorphic Encryption (FHE) enabled Solidity smart contracts using the
-FHEVM protocol by Zama.
+Locked Worlds is an end-to-end encrypted gaming experience that demonstrates how Zama's Fully Homomorphic Encryption (FHE) technology can power private on-chain gameplay. Players mint three mysterious keys, decrypt their attributes on demand, and spend them to claim encrypted gold rewards – all without exposing sensitive information to other players or off-chain services.
 
-## Quick Start
+## Introduction
 
-For detailed instructions see:
-[FHEVM Hardhat Quick Start Tutorial](https://docs.zama.ai/protocol/solidity-guides/getting-started/quick-start-tutorial)
+This project bridges advanced FHE smart contracts with a modern React interface so that every interaction, from key creation to reward redemption, respects player privacy. The contracts run on Hardhat and can be deployed to Sepolia, while the frontend uses Vite, viem, RainbowKit, and ethers to deliver a responsive, wallet-driven user journey. By combining homomorphic encryption with deterministic randomness, Locked Worlds ensures fair distribution of resources without leaking raw values on-chain.
+
+## Core Gameplay Flow
+
+1. **Claim Keys** – Each player may claim exactly three keys. Every key is assigned an encrypted rarity (gold, silver, or diamond) represented by the integers `1`, `2`, and `3`.
+2. **Decrypt Attributes** – The frontend reveals a key's rarity only when the player chooses to decrypt it, keeping attributes shielded until that moment.
+3. **Redeem Rewards** – Spending a key grants an encrypted gold payout between 100 and 1000 units, preserving the confidentiality of the reward until it is decrypted client-side.
+
+## Advantages
+
+- **Private Randomness**: Zama's FHE smart contracts generate and store attributes and rewards without ever exposing raw values on-chain.
+- **Provable Fairness**: Deterministic randomness within the contract eliminates bias while enabling transparent auditing.
+- **Wallet-Native UX**: Integrations with RainbowKit, viem, and ethers provide a frictionless experience across desktop and mobile wallets.
+- **Modular Architecture**: Clear separation between contracts, deployment scripts, tests, and frontend simplifies maintenance and extensibility.
+
+## Technology Stack
+
+- **Smart Contracts**: Hardhat, TypeScript, and Solidity with Zama FHE libraries.
+- **Encryption**: FHEVM protocol with libraries documented in `docs/zama_llm.md` and `docs/zama_doc_relayer.md`.
+- **Frontend**: React + Vite application in the `frontend` directory, using viem for reads and ethers for contract writes.
+- **Wallet Connectivity**: RainbowKit and wagmi for account management and network switching.
+- **Tooling**: TypeScript, ESLint, Hardhat deploy, and a comprehensive test suite under `test/`.
+
+## Project Structure
+
+```
+Locked-Worlds/
+├── contracts/            # Solidity contracts (e.g., LockedWorlds.sol)
+├── deploy/               # Deployment scripts configured for local and Sepolia
+├── deployments/          # Network-specific ABI and deployment metadata
+├── docs/                 # Internal documentation for Zama integrations
+├── frontend/             # React + Vite application
+├── tasks/                # Custom Hardhat tasks
+├── test/                 # Automated contract tests
+├── hardhat.config.ts     # Hardhat configuration with FHE settings
+└── README.md             # Project overview and instructions
+```
+
+## Getting Started
 
 ### Prerequisites
 
-- **Node.js**: Version 20 or higher
-- **npm or yarn/pnpm**: Package manager
+- Node.js **v20+**
+- npm **v9+**
+- Access to an FHEVM-compatible node (local or Sepolia)
+- A funded Sepolia account for deployment and interaction
 
 ### Installation
 
-1. **Install dependencies**
+```bash
+npm install
+```
 
-   ```bash
-   npm install
-   ```
+### Environment Configuration
 
-2. **Set up environment variables**
+Create a `.env` file at the project root to supply the required secrets:
 
-   ```bash
-   npx hardhat vars set MNEMONIC
+```
+PRIVATE_KEY=your_private_key_without_0x
+INFURA_API_KEY=your_infura_project_id
+ETHERSCAN_API_KEY=optional_etherscan_key
+```
 
-   # Set your Infura API key for network access
-   npx hardhat vars set INFURA_API_KEY
+> The deployment scripts rely on `process.env.PRIVATE_KEY` and `process.env.INFURA_API_KEY`. Never commit the `.env` file to version control.
 
-   # Optional: Set Etherscan API key for contract verification
-   npx hardhat vars set ETHERSCAN_API_KEY
-   ```
+## Contract Workflow
 
-3. **Compile and test**
-
+1. **Compile contracts**
    ```bash
    npm run compile
+   ```
+2. **Run tests**
+   ```bash
    npm run test
    ```
-
-4. **Deploy to local network**
-
+3. **Launch a local node** (FHEVM-ready)
    ```bash
-   # Start a local FHEVM-ready node
    npx hardhat node
-   # Deploy to local network
+   ```
+4. **Deploy locally**
+   ```bash
    npx hardhat deploy --network localhost
    ```
-
-5. **Deploy to Sepolia Testnet**
-
+5. **Deploy to Sepolia**
    ```bash
-   # Deploy to Sepolia
    npx hardhat deploy --network sepolia
-   # Verify contract on Etherscan
+   ```
+6. **Verify on Etherscan (optional)**
+   ```bash
    npx hardhat verify --network sepolia <CONTRACT_ADDRESS>
    ```
 
-6. **Test on Sepolia Testnet**
+Deployed ABIs are stored under `deployments/<network>` and must be copied into the frontend when updating contract interactions.
 
+## Frontend Workflow
+
+1. Navigate to the frontend directory:
    ```bash
-   # Once deployed, you can run a simple test on Sepolia.
-   npx hardhat test --network sepolia
+   cd frontend
    ```
+2. Install frontend dependencies:
+   ```bash
+   npm install
+   ```
+3. Start the Vite development server:
+   ```bash
+   npm run dev
+   ```
+4. Connect with RainbowKit to the target network (local node or Sepolia) and interact with the dashboard to claim, decrypt, and spend keys.
 
-## 📁 Project Structure
+The frontend strictly consumes ABIs from `deployments/<network>` and relies on viem for reads and ethers for state-changing transactions. No local storage or environment variables are used in the UI layer, ensuring deterministic behavior across environments.
 
-```
-fhevm-hardhat-template/
-├── contracts/           # Smart contract source files
-│   └── FHECounter.sol   # Example FHE counter contract
-├── deploy/              # Deployment scripts
-├── tasks/               # Hardhat custom tasks
-├── test/                # Test files
-├── hardhat.config.ts    # Hardhat configuration
-└── package.json         # Dependencies and scripts
-```
+## Challenges Addressed
 
-## 📜 Available Scripts
+- **Secure Asset Distribution**: Allocates items and rewards without revealing values to unauthorized parties.
+- **Player Privacy**: Keeps player inventories confidential while still enabling verification through FHE proofs.
+- **Network Compatibility**: Provides scripts for both local testing and Sepolia deployment without relying on mnemonic-based accounts.
+- **Developer Experience**: Supplies repeatable tasks, tests, and documentation so contributors can ramp quickly.
 
-| Script             | Description              |
-| ------------------ | ------------------------ |
-| `npm run compile`  | Compile all contracts    |
-| `npm run test`     | Run all tests            |
-| `npm run coverage` | Generate coverage report |
-| `npm run lint`     | Run linting checks       |
-| `npm run clean`    | Clean build artifacts    |
+## Future Roadmap
 
-## 📚 Documentation
+- **Leaderboard Encryption**: Introduce homomorphically encrypted leaderboards to compare player progress privately.
+- **Mobile-Optimized UI**: Extend responsive layouts for mobile-first experiences with wallet deep links.
+- **Additional Key Types**: Support seasonal or event-based key drops with configurable reward curves.
+- **In-Game Marketplace**: Enable peer-to-peer trading of encrypted assets once privacy-preserving escrow is available.
+- **Automated Monitoring**: Add observability tooling that tracks contract events while respecting encryption constraints.
+
+## Documentation & References
 
 - [FHEVM Documentation](https://docs.zama.ai/fhevm)
-- [FHEVM Hardhat Setup Guide](https://docs.zama.ai/protocol/solidity-guides/getting-started/setup)
-- [FHEVM Testing Guide](https://docs.zama.ai/protocol/solidity-guides/development-guide/hardhat/write_test)
-- [FHEVM Hardhat Plugin](https://docs.zama.ai/protocol/solidity-guides/development-guide/hardhat)
+- [Zama Solidity Guides](https://docs.zama.ai/protocol/solidity-guides)
+- Project-specific notes in `docs/zama_llm.md` and `docs/zama_doc_relayer.md`
 
-## 📄 License
+## Support
 
-This project is licensed under the BSD-3-Clause-Clear License. See the [LICENSE](LICENSE) file for details.
-
-## 🆘 Support
-
-- **GitHub Issues**: [Report bugs or request features](https://github.com/zama-ai/fhevm/issues)
-- **Documentation**: [FHEVM Docs](https://docs.zama.ai)
-- **Community**: [Zama Discord](https://discord.gg/zama)
+- **Issues & Feedback**: Please open GitHub issues or contact the maintainer directly.
+- **Community**: Join the Zama Discord for protocol updates and integration help.
+- **License**: This project is released under the BSD-3-Clause-Clear License. See the [LICENSE](LICENSE) file for full terms.
 
 ---
 
-**Built with ❤️ by the Zama team**
+Locked Worlds shows how verifiable homomorphic encryption can unlock privacy-first web3 gameplay, setting the stage for expansive, secure, and player-friendly virtual economies.
